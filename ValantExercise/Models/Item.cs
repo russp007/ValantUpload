@@ -7,6 +7,9 @@ using System.Web;
 
 namespace ValantExercise.Models
 {
+    /// <summary>
+    /// This class represents the domain item that we are concerned with.
+    /// </summary>
     public class Item
     {
         [JsonProperty(PropertyName = "label")]
