@@ -244,5 +244,67 @@ namespace ValantExercise.Tests.Controllers
         }
 
         #endregion
+
+        #region Tests for expiration
+
+        [TestMethod]
+        public void TestExpiration_ConfirmTestOnHappyPath()
+        {
+            // arrange
+            // 
+            // prep the objects
+            IInventoryRepository inventoryRep = new InventoryRepository();
+            INotificationWriter writer = new TestNotificationWriter();
+            INotificationManager notificationMgr = new NotificationManager(writer);
+            IInventoryManager manager = new InventoryManager(inventoryRep, notificationMgr);
+            InventoryController controller = new InventoryController(manager);
+
+            // build test data
+            DateTime expiredDate = DateTime.Now.AddDays(-7);
+            DateTime validDate = DateTime.Now.AddDays(7);
+            List<Item> items = new List<Item>();
+            for(int i=1; i<4; i++)              // the first three have valid dates
+            {
+                items.Add(new Item { Label = $"Label {i}", Expiration = validDate, Type = $"Type {i}"  });
+            }
+            for (int i = 4; i < 7; i++)         // the last three have expired dates
+            {
+                items.Add(new Item { Label = $"Label {i}", Expiration = expiredDate, Type = $"Type {i}" });
+            }
+
+            // add the test data
+            foreach(Item item in items)
+            {
+                controller.AddItem(item);
+            }
+
+            // act
+            //
+            manager.ProcessExpirations();
+
+            // assert
+            //
+
+            // check that each item has been processed
+            List<string> messages = new List<string>();
+            messages.AddRange(((TestNotificationWriter)writer).Messages);
+            foreach(Item item in items)
+            {
+                // determine if the item should be expired
+                bool expired = (item.Expiration.Equals(expiredDate));
+
+                // confirm the expiration status
+                Item updatedItem = inventoryRep.Get(item.Label);
+                Assert.IsNotNull(updatedItem);
+                Assert.AreEqual(expired, updatedItem.Expired);
+
+                // confirm the notification was processed correctly
+                string errorMessage = $"Item '{item.Label}' has expired.";
+                bool messageFound = messages.Contains(errorMessage);
+                Assert.AreEqual(expired, messageFound);
+            }
+        }
+
+        #endregion
     }
 }

@@ -7,6 +7,9 @@ using ValantExercise.Models;
 
 namespace ValantExercise.Repositories
 {
+    /// <summary>
+    /// This is the contract for working with the inventory repository.
+    /// </summary>
     public interface IInventoryRepository
     {
         bool Exists(string label);
